@@ -83,7 +83,7 @@ static void delete_allocation(server_turn_alloc_t *alloc) {
 
 	alloc->state = SERVER_TURN_ALLOC_DELETED;
 	turn_destroy_map(&alloc->map);
-	closesocket(alloc->sock);
+	udp_close_socket(alloc->sock);
 	alloc->sock = INVALID_SOCKET;
 	alloc->credentials = NULL;
 }
@@ -208,7 +208,7 @@ error:
 void server_do_destroy(juice_server_t *server) {
 	JLOG_DEBUG("Destroying server");
 
-	closesocket(server->sock);
+	udp_close_socket(server->sock);
 	mutex_destroy(&server->mutex);
 
 	server_turn_alloc_t *end = server->allocs + server->allocs_count;
@@ -894,7 +894,7 @@ int server_process_turn_allocate(juice_server_t *server, const stun_message_t *m
 			return -1;
 		}
 		if (turn_init_map(&alloc->map, server->config.max_peers) < 0) {
-			closesocket(alloc->sock);
+			udp_close_socket(alloc->sock);
 			alloc->sock = INVALID_SOCKET;
 			server_answer_stun_error(server, msg->transaction_id, src, msg->msg_method, 500,
 			                         credentials);

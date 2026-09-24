@@ -126,7 +126,7 @@ void conn_poll_registry_cleanup(conn_registry_t *registry) {
 	thread_join(registry_impl->thread, NULL);
 
 #ifdef _WIN32
-	closesocket(registry_impl->interrupt_sock);
+	udp_close_socket(registry_impl->interrupt_sock);
 #else
 	close(registry_impl->interrupt_pipe_out);
 	close(registry_impl->interrupt_pipe_in);
@@ -564,7 +564,7 @@ void conn_poll_cleanup(juice_agent_t *agent) {
 	conn_poll_interrupt(agent);
 
 	mutex_destroy(&conn_impl->send_mutex);
-	closesocket(conn_impl->udp_sock);
+	udp_close_socket(conn_impl->udp_sock);
 	closesocket(conn_impl->tcp_sock);
 	free(agent->conn_impl);
 	agent->conn_impl = NULL;
@@ -632,7 +632,7 @@ int conn_poll_send(juice_agent_t *agent, const addr_record_t *dst, const char *d
 	} else {
 		if (conn_impl->send_ds >= 0 && conn_impl->send_ds != ds) {
 			JLOG_VERBOSE("Setting Differentiated Services field to 0x%X", ds);
-			if (udp_set_diffserv(conn_impl->udp_sock, ds) == 0)
+			if (udp_set_diffserv(conn_impl->udp_sock, dst, ds) == 0)
 				conn_impl->send_ds = ds;
 			else
 				conn_impl->send_ds = -1; // disable for next time

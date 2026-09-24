@@ -274,7 +274,7 @@ int conn_mux_registry_init(conn_registry_t *registry, udp_socket_config_t *confi
 
 error:
 	mutex_destroy(&registry_impl->send_mutex);
-	closesocket(registry_impl->sock);
+	udp_close_socket(registry_impl->sock);
 	free(registry_impl->map);
 	free(registry_impl);
 	registry->impl = NULL;
@@ -298,7 +298,7 @@ void conn_mux_registry_cleanup(conn_registry_t *registry) {
 	--conn_mux_registries_count;
 
 	mutex_destroy(&registry_impl->send_mutex);
-	closesocket(registry_impl->sock);
+	udp_close_socket(registry_impl->sock);
 	free(registry_impl->map);
 	free(registry->impl);
 	registry->impl = NULL;
@@ -625,7 +625,7 @@ int conn_mux_send(juice_agent_t *agent, const addr_record_t *dst, const char *da
 
 	if (registry_impl->send_ds >= 0 && registry_impl->send_ds != ds) {
 		JLOG_VERBOSE("Setting Differentiated Services field to 0x%X", ds);
-		if (udp_set_diffserv(registry_impl->sock, ds) == 0)
+		if (udp_set_diffserv(registry_impl->sock, dst, ds) == 0)
 			registry_impl->send_ds = ds;
 		else
 			registry_impl->send_ds = -1; // disable for next time

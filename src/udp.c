@@ -137,7 +137,7 @@ static socket_t create_socket_for_addrinfo(const udp_socket_config_t *config,
 
 error:
 	if (sock != INVALID_SOCKET)
-		closesocket(sock);
+		udp_close_socket(sock);
 
 	return INVALID_SOCKET;
 }
@@ -174,6 +174,10 @@ socket_t udp_create_socket(const udp_socket_config_t *config) {
 	JLOG_ERROR("UDP socket opening failed");
 	freeaddrinfo(ai_list);
 	return INVALID_SOCKET;
+}
+
+void udp_close_socket(socket_t sock) {
+	closesocket(sock);
 }
 
 int udp_recvfrom(socket_t sock, char *buffer, size_t size, addr_record_t *src) {
@@ -246,16 +250,18 @@ int udp_sendto_self(socket_t sock, const char *data, size_t size) {
 #endif
 }
 
-int udp_set_diffserv(socket_t sock, int ds) {
+int udp_set_diffserv(socket_t sock, const addr_record_t *dst, int ds) {
 #ifdef _WIN32
 	// IP_TOS has been intentionally broken on Windows in favor of a convoluted proprietary
 	// mechanism called qWave. Thank you Microsoft!
 	// TODO: Investigate if DSCP can be still set directly without administrator flow configuration.
 	(void)sock;
+	(void)dst;
 	(void)ds;
 	JLOG_INFO("IP Differentiated Services are not supported on Windows");
 	return -1;
 #else
+	(void)dst;
 	addr_record_t name;
 	name.len = sizeof(name.addr);
 	name.socktype = SOCK_DGRAM;
@@ -424,11 +430,11 @@ static int get_local_default_inet6(uint16_t port, struct sockaddr_in6 *result) {
 		goto error;
 
 	addr_set_port((struct sockaddr *)result, port);
-	closesocket(sock);
+	udp_close_socket(sock);
 	return 0;
 
 error:
-	closesocket(sock);
+	udp_close_socket(sock);
 	return -1;
 }
 #endif
