@@ -7,6 +7,7 @@ set(PROJECT_DESCRIPTION "UDP Interactive Connectivity Establishment (ICE) librar
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(USE_NETTLE "Use Nettle for hash functions" OFF)
 option(NO_SERVER "Disable server support" OFF)
+option(NO_QWAVE "Disable Windows qWave Diffserv support" OFF)
 option(NO_TESTS "Disable tests build" OFF)
 option(WARNINGS_AS_ERRORS "Treat warnings as errors" OFF)
 option(FUZZER "Enable oss-fuzz fuzzing" OFF)
@@ -49,6 +50,7 @@ set(LIBJUICE_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/src/hmac.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/ice.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/juice.c
+	${CMAKE_CURRENT_SOURCE_DIR}/src/qwave.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/log.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/random.c
 	${CMAKE_CURRENT_SOURCE_DIR}/src/server.c
@@ -85,6 +87,7 @@ set(TESTS_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/test/bind.c
 	${CMAKE_CURRENT_SOURCE_DIR}/test/ufrag.c
 	${CMAKE_CURRENT_SOURCE_DIR}/test/tcp.c
+	${CMAKE_CURRENT_SOURCE_DIR}/test/diffserv.c
 )
 source_group("Test Files" FILES "${TESTS_SOURCES}")
 
@@ -119,10 +122,12 @@ target_link_libraries(juice-static PRIVATE Threads::Threads)
 if(WIN32)
 	target_link_libraries(juice PRIVATE
 		ws2_32 # winsock2
-		bcrypt)
+		bcrypt
+		qwave) # qWave (QOS2) Diffserv
 	target_link_libraries(juice-static PRIVATE
 		ws2_32 # winsock2
-		bcrypt)
+		bcrypt
+		qwave) # qWave (QOS2) Diffserv
 endif()
 
 if (USE_NETTLE)
@@ -136,9 +141,14 @@ else()
     target_compile_definitions(juice-static PRIVATE USE_NETTLE=0)
 endif()
 
-if (NO_SERVER)
+if(NO_SERVER)
 	target_compile_definitions(juice PRIVATE NO_SERVER)
 	target_compile_definitions(juice-static PRIVATE NO_SERVER)
+endif()
+
+if(NO_QWAVE)
+	target_compile_definitions(juice PRIVATE NO_QWAVE)
+	target_compile_definitions(juice-static PRIVATE NO_QWAVE)
 endif()
 
 if(APPLE)

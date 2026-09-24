@@ -28,6 +28,7 @@ int test_stun_unhandled_no_host(void);
 int test_stun_unhandled_unhandle(void);
 int test_tcp(void);
 int test_tcp_bad_candidate(void);
+int test_diffserv(void);
 
 #ifndef NO_SERVER
 int test_server(void);
@@ -120,6 +121,12 @@ int main(int argc, char **argv) {
 	if (test_tcp_bad_candidate()) {
 		fprintf(stderr, "TCP bad candidate test failed\n");
 		return -2;
+	}
+
+	printf("\nRunning diffserv test...\n");
+	if (test_diffserv()) {
+		fprintf(stderr, "Diffserv test failed\n");
+		return -1;
 	}
 
 

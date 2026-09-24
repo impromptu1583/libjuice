@@ -28,6 +28,7 @@ The library implements a simplified full ICE agent ([RFC5245](https://www.rfc-ed
 - SDP-based interface ([RFC8839](https://www.rfc-editor.org/rfc/rfc8839.html))
 - IPv4 and IPv6 dual-stack support
 - Optional multiplexing on a single UDP port
+- DSCP marking of outgoing datagrams (on Windows via qWave traffic types, no elevation required)
 
 The limitations compared to a fully-featured ICE agent are:
 - Only UDP is supported as transport protocol and other protocols are ignored.
