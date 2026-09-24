@@ -9,6 +9,7 @@
 #include "udp.h"
 #include "addr.h"
 #include "log.h"
+#include "qwave.h"
 #include "random.h"
 #include "thread.h" // for mutexes
 
@@ -177,6 +178,9 @@ socket_t udp_create_socket(const udp_socket_config_t *config) {
 }
 
 void udp_close_socket(socket_t sock) {
+#ifdef _WIN32
+	qwave_remove_socket(sock); // release Diffserv state if any
+#endif
 	closesocket(sock);
 }
 
@@ -252,14 +256,7 @@ int udp_sendto_self(socket_t sock, const char *data, size_t size) {
 
 int udp_set_diffserv(socket_t sock, const addr_record_t *dst, int ds) {
 #ifdef _WIN32
-	// IP_TOS has been intentionally broken on Windows in favor of a convoluted proprietary
-	// mechanism called qWave. Thank you Microsoft!
-	// TODO: Investigate if DSCP can be still set directly without administrator flow configuration.
-	(void)sock;
-	(void)dst;
-	(void)ds;
-	JLOG_INFO("IP Differentiated Services are not supported on Windows");
-	return -1;
+	return qwave_set_diffserv(sock, dst, ds);
 #else
 	(void)dst;
 	addr_record_t name;
